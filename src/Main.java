@@ -144,13 +144,76 @@ public class Main {
     }
 
 
-    public static void main(String[] args) {
-        // This is the client code
-        // Uncomment the following lines to test the class which you would like to test
+    public static void main(String[] args)
 
-        // testTransaction1()
-        // testTransaction2()
-        // testTransaction3()
-        // testTransaction4()
+
+        Calendar today = Calendar.getInstance();
+        BankAccount account = new BankAccount(1000.00);
+        System.out.println("=== Starting balance: " + account.getBalance() + " ===\n");
+
+        // --- 1. DepositTransaction ---
+        System.out.println("--- Deposit Test ---");
+        DepositTrasaction deposit = new DepositTrasaction(500, today);
+        try {
+            deposit.apply(account);
+        } catch (InsufficientFundsException e) {
+            System.out.println("Unexpected exception: " + e.getMessage());
+        }
+        System.out.println();
+
+        // --- 2. WithdrawalTransaction (sufficient funds) ---
+        System.out.println("--- Withdrawal Test (sufficient funds) ---");
+        WithdrawalTransaction withdrawal = new WithdrawalTransaction(200, today);
+        try {
+            withdrawal.apply(account);
+        } catch (InsufficientFundsException e) {
+            System.out.println("Exception: " + e.getMessage());
+        }
+        System.out.println();
+
+        // --- 3. Reverse the withdrawal ---
+        System.out.println("--- Reverse Withdrawal ---");
+        withdrawal.reverse();
+        System.out.println();
+
+        // --- 4. WithdrawalTransaction (insufficient funds) ---
+        System.out.println("--- Withdrawal Test (insufficient funds) ---");
+        WithdrawalTransaction bigWithdrawal = new WithdrawalTransaction(99999, today);
+        try {
+            bigWithdrawal.apply(account);
+        } catch (InsufficientFundsException e) {
+            System.out.println("Caught: " + e.getMessage());
+        }
+        System.out.println();
+
+        // --- 5. Partial withdrawal (0 < balance < amount) ---
+        System.out.println("--- Partial Withdrawal Test ---");
+        account.setBalance(50.00);
+        WithdrawalTransaction partialW = new WithdrawalTransaction(300, today);
+        try {
+            partialW.apply(account, true);
+            System.out.println("Shortfall not withdrawn: " + partialW.getAmountNotWithdrawn());
+        } catch (InsufficientFundsException e) {
+            System.out.println("Exception: " + e.getMessage());
+        }
+        System.out.println();
+
+        // --- 6. Polymorphism demo: upcast subtype → BaseTransaction ---
+        System.out.println("--- Polymorphism / Upcasting Demo ---");
+        account.setBalance(500.00);
+
+        // Late binding: baseRef holds a WithdrawalTransaction object
+        BaseTransaction baseRef = new WithdrawalTransaction(100, today);
+        try {
+            baseRef.apply(account); // WithdrawalTransaction.apply() is called at runtime
+        } catch (InsufficientFundsException e) {
+            System.out.println("Exception via base ref: " + e.getMessage());
+        }
+
+        // Downcast to access reverse() which is specific to WithdrawalTransaction
+        WithdrawalTransaction downcast = (WithdrawalTransaction) baseRef;
+        downcast.reverse();
+    
+
     }
 }
